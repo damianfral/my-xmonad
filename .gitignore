@@ -1,0 +1,6 @@
+dist
+dist-newstyle
+.cache
+*.direnv/*
+result
+result-*
