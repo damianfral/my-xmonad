@@ -138,13 +138,13 @@ myKeys conf@(XConfig {XMonad.modMask = modMask'}) =
       -- Multimedia keys
       --
       -- XF86AudioLowerVolume
-      ((0, 0x1008ff11), spawn "amixer set Master 5%-"),
+      ((0, 0x1008ff11), spawn "pulsemixer --change-volume -5 --max-volume 100"),
       -- XF86AudioRaiseVolume
-      ((0, 0x1008ff13), spawn "amixer set Master 5%+"),
+      ((0, 0x1008ff13), spawn "pulsemixer --change-volume +5 --max-volume 100"),
       -- XF86AudioMute
-      ((0, 0x1008ff12), spawn "amixer set Master 0%"),
+      ((0, 0x1008ff12), spawn "pulsemixer --set-volume 0 --max-volume 100"),
       -- XF86AudioMute
-      ((shiftMask, 0x1008ff12), spawn "amixer set Master 100%"),
+      ((shiftMask, 0x1008ff12), spawn "pulsemixer --set-volume 100 --max-volume 100"),
       -- XF86AudioNext
       ((0, 0x1008ff17), spawn "playerctl next"),
       -- XF86AudioPrev
