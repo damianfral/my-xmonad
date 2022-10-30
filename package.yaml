@@ -26,6 +26,7 @@ dependencies:
 - xmonad
 - xmonad-contrib
 - xmonad-extras
+- text
 
 executables:
 

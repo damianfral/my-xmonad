@@ -1,5 +1,7 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
+import Control.Monad (void)
 import qualified Data.Map as M
 import System.Exit
 import System.IO
@@ -15,7 +17,7 @@ import XMonad.Prompt
 import XMonad.Prompt.Pass
 import XMonad.Prompt.RunOrRaise (runOrRaisePrompt)
 import qualified XMonad.StackSet as W
-import XMonad.Util.Run (spawnPipe)
+import XMonad.Util.Run (runProcessWithInput, spawnPipe)
 
 ------------------------------------------------------------------------
 
@@ -98,17 +100,6 @@ myFocusedBorderColor = "#bf8b56"
 myBorderWidth :: Dimension
 myBorderWidth = 2
 
-------------------------------------------------------------------------
--- Key bindings
---
--- modMask lets you specify which modkey you want to use. The default
--- is mod1Mask ("left alt"). You may also consider using mod3Mask
--- ("right alt"), which does not conflict with emacs keybindings. The
--- "windows key" is usually mod4Mask.
---
-myModMask :: KeyMask
-myModMask = mod4Mask
-
 myPromptConfig :: XPConfig
 myPromptConfig =
   def
@@ -121,6 +112,51 @@ myPromptConfig =
       height = 16
     }
 
+data GreenclipPrompt = GreenclipPrompt
+
+instance XPrompt GreenclipPrompt where
+  showXPrompt _ = "Clipboard: "
+
+greenclipPrompt :: XPConfig -> X ()
+greenclipPrompt c = do
+  outputs <- lines <$> runProcessWithInput "greenclip" ["print"] ""
+  mkXPrompt GreenclipPrompt c (mkCompletion outputs) copyToClipboard
+  where
+    mkCompletion = mkComplFunFromList c
+    copyToClipboard str = void $ runProcessWithInput "xsel -ib " [] str
+
+------------------------------------------------------------------------
+-- Key bindings
+--
+-- modMask lets you specify which modkey you want to use. The default
+-- is mod1Mask ("left alt"). You may also consider using mod3Mask
+-- ("right alt"), which does not conflict with emacs keybindings. The
+-- "windows key" is usually mod4Mask.
+--
+myModMask :: KeyMask
+myModMask = mod4Mask
+
+xf86AudioLowerVolume :: KeySym
+xf86AudioLowerVolume = 0x1008ff11
+
+xf86AudioMute :: KeySym
+xf86AudioMute = 0x1008ff12
+
+xf86AudioRaiseVolume :: KeySym
+xf86AudioRaiseVolume = 0x1008ff13
+
+xf86AudioNext :: KeySym
+xf86AudioNext = 0x1008ff17
+
+xf86AudioPrev :: KeySym
+xf86AudioPrev = 0x1008ff16
+
+xf86AudioPlay :: KeySym
+xf86AudioPlay = 0x1008ff14
+
+xf86AudioStop :: KeySym
+xf86AudioStop = 0x1008ff15
+
 myKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
 myKeys conf@(XConfig {XMonad.modMask = modMask'}) =
   M.fromList $
@@ -128,35 +164,22 @@ myKeys conf@(XConfig {XMonad.modMask = modMask'}) =
     -- Custom key bindings
     --
 
-    -- Start a terminal. Terminal to start is specified by myTerminal variable.
-    [ ((modMask' .|. shiftMask, xK_Return), spawn $ XMonad.terminal conf),
+    [ -- Start a terminal. Terminal to start is specified by myTerminal variable.
+      ((modMask' .|. shiftMask, xK_Return), spawn $ XMonad.terminal conf),
       -- Takes screenshot.
       ((0, 0x1008ff81), spawn "flameshot gui"),
-      ( (modMask', xK_r),
-        runOrRaisePrompt myPromptConfig
-      ),
+      ((modMask', xK_r), runOrRaisePrompt myPromptConfig),
       -- Multimedia keys
-      --
-      -- XF86AudioLowerVolume
-      ((0, 0x1008ff11), spawn "pulsemixer --change-volume -5 --max-volume 100"),
-      -- XF86AudioRaiseVolume
-      ((0, 0x1008ff13), spawn "pulsemixer --change-volume +5 --max-volume 100"),
-      -- XF86AudioMute
-      ((0, 0x1008ff12), spawn "pulsemixer --set-volume 0 --max-volume 100"),
-      -- XF86AudioMute
-      ((shiftMask, 0x1008ff12), spawn "pulsemixer --set-volume 100 --max-volume 100"),
-      -- XF86AudioNext
-      ((0, 0x1008ff17), spawn "playerctl next"),
-      -- XF86AudioPrev
-      ((0, 0x1008ff16), spawn "playerctl previous"),
-      -- XF86AudioPlay
-      ((0, 0x1008ff14), spawn "playerctl play-pause"),
-      -- XF86AudioStop
-      ((0, 0x1008ff15), spawn "playerctl stop"),
-      ((modMask', xK_p), XMonad.Prompt.Pass.passPrompt myPromptConfig),
+      ((0, xf86AudioLowerVolume), spawn "pulsemixer --change-volume -5 --max-volume 100"),
+      ((0, xf86AudioRaiseVolume), spawn "pulsemixer --change-volume +5 --max-volume 100"),
+      ((0, xf86AudioMute), spawn "pulsemixer --set-volume 0 --max-volume 100"),
+      ((shiftMask, xf86AudioMute), spawn "pulsemixer --set-volume 100 --max-volume 100"),
+      ((0, xf86AudioNext), spawn "playerctl next"),
+      ((0, xf86AudioPrev), spawn "playerctl previous"),
+      ((0, xf86AudioPlay), spawn "playerctl play-pause"),
+      ((0, xf86AudioStop), spawn "playerctl stop"),
+      ((modMask', xK_c), greenclipPrompt myPromptConfig),
       ((modMask' .|. shiftMask, xK_p), XMonad.Prompt.Pass.passGeneratePrompt myPromptConfig),
-      -- Eject CD tray.
-      ((0, 0x1008FF2C), spawn "eject -T"),
       ((modMask', xK_e), enableExternalMonitor),
       ((modMask' .|. shiftMask, xK_e), disableExternalMonitor),
       ((modMask', xK_i), enableLaptopMonitor),

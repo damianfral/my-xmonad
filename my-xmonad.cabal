@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.6.
+-- This file has been generated from package.yaml by hpack version 0.34.7.
 --
 -- see: https://github.com/sol/hpack
 
@@ -11,7 +11,7 @@ homepage:       https://github.com/damianfral/my-xmonad#readme
 bug-reports:    https://github.com/damianfral/my-xmonad/issues
 author:         damianfral
 maintainer:     huevofritopamojarpan@gmail.com
-copyright:      2019 damianfral
+copyright:      2022 damianfral
 license:        BSD3
 build-type:     Simple
 extra-source-files:
@@ -32,6 +32,7 @@ executable my-xmonad
   build-depends:
       base >=4.7 && <5
     , containers
+    , text
     , xmonad
     , xmonad-contrib
     , xmonad-extras
