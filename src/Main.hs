@@ -267,7 +267,6 @@ myMouseBindings (XConfig {XMonad.modMask = modMask'}) =
 -- per-workspace layout choices.
 --
 -- By default, do nothing.
--- myStartupHook = return ()
 myStartupHook :: X ()
 myStartupHook = pure ()
 
@@ -284,7 +283,7 @@ main = do
         defaults
           { manageHook = manageDocks <+> manageHook def,
             layoutHook = defaultLayouts,
-            logHook =
+            logHook = do
               dynamicLogWithPP
                 xmobarPP
                   { ppOutput = hPutStrLn xmproc,
@@ -296,7 +295,7 @@ main = do
                     ppTitle = xmobarColor "#f7f9fb" "",
                     ppLayout = const "" -- to disable the layout info on xmobar
                   }
-                >> updatePointer (0.5, 0.5) (0, 0)
+              updatePointer (0.5, 0.5) (0, 0)
           }
 
 ------------------------------------------------------------------------

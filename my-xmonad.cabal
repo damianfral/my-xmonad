@@ -32,7 +32,6 @@ executable my-xmonad
   build-depends:
       base >=4.7 && <5
     , containers
-    , text
     , xmonad
     , xmonad-contrib
     , xmonad-extras
