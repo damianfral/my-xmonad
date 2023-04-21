@@ -32,7 +32,7 @@ executables:
 
   my-xmonad:
     main         : Main.hs
-    source-dirs  : ./app/
+    source-dirs  : ./src
 
 ghc-options:
 - -Wall
