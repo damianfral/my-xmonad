@@ -14,7 +14,6 @@ jobs:
           name: opensource
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - run: nix build
-      - run: nix build .#my-xmonad-src
 
   build-dev-shell:
     runs-on: ubuntu-latest

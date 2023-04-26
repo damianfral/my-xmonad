@@ -65,14 +65,6 @@
     in
     rec {
       packages.my-xmonad = pkgs.haskellPackages.my-xmonad;
-      packages.my-xmonad-src = pkgs.stdenv.mkDerivation {
-        name = "my-xmonad-src";
-        src = ./.;
-        installPhase = ''
-          mkdir -p $out
-          cp src/Main.hs $out/
-        '';
-      };
       packages.default = packages.my-xmonad;
 
       apps.my-xmonad = flake-utils.lib.mkApp {
