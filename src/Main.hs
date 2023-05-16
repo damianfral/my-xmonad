@@ -104,7 +104,7 @@ myPromptConfig :: XPConfig
 myPromptConfig =
   def
     { position = Top,
-      font = "xft:Anonymice Nerd Font:pixelsize=12",
+      font = "xft:AnonymicePro Nerd Font:pixelsize=12",
       bgColor = "#f7f9fb",
       fgColor = "#002b36",
       bgHLight = "#002b36",
