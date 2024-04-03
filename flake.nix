@@ -7,6 +7,7 @@
     nix-filter.url = "github:numtide/nix-filter";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
     pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
+    xmonad-contrib.url = "github:xmonad/xmonad-contrib";
   };
 
   outputs =
@@ -15,13 +16,14 @@
     , flake-utils
     , nix-filter
     , pre-commit-hooks
+    , xmonad-contrib
     , ...
     }:
 
     let
       pkgsFor = system: import nixpkgs {
         inherit system;
-        overlays = [ self.overlays.default ];
+        overlays = [ self.overlays.default self.overlays.xmonad-contrib ];
       };
       filteredSrc =
         nix-filter.lib {
@@ -44,6 +46,14 @@
             });
         });
       };
+      overlays.xmonad-contrib = final: prev: {
+        haskellPackages = prev.haskellPackages.override (old: {
+          overrides = final.lib.composeExtensions
+            (old.overrides or (_: _: { }))
+            (xmonad-contrib.hoverlay final prev);
+        });
+      };
+
     }
     //
     flake-utils.lib.eachDefaultSystem (system:
