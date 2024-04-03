@@ -25,7 +25,6 @@ dependencies:
 - containers
 - xmonad
 - xmonad-contrib
-- xmonad-extras
 
 executables:
 
