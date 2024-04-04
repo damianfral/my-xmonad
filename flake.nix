@@ -42,7 +42,7 @@
           overrides = final.lib.composeExtensions
             (old.overrides or (_: _: { }))
             (self: super: {
-              my-xmonad = self.callCabal2nix "my-xmonad" filteredSrc { };
+              xmonad-damianfral = self.callCabal2nix "xmonad-damianfral" filteredSrc { };
             });
         });
       };
@@ -74,20 +74,20 @@
       };
     in
     rec {
-      packages.my-xmonad = pkgs.haskellPackages.my-xmonad;
-      packages.default = packages.my-xmonad;
+      packages.xmonad-damianfral = pkgs.haskellPackages.xmonad-damianfral;
+      packages.default = packages.xmonad-damianfral;
 
-      apps.my-xmonad = flake-utils.lib.mkApp {
+      apps.xmonad-damianfral = flake-utils.lib.mkApp {
         drv = pkgs.haskell.lib.justStaticExecutables (
-          packages.my-xmonad.overrideAttrs (oldAttrs: {
+          packages.xmonad-damianfral.overrideAttrs (oldAttrs: {
             configureFlags = oldAttrs.configureFlags ++ [ "--ghc-option=-O2" ];
           })
         );
       };
-      apps.default = apps.my-xmonad;
+      apps.default = apps.xmonad-damianfral;
 
       devShells.default = pkgs.haskellPackages.shellFor {
-        packages = p: [ packages.my-xmonad ];
+        packages = p: [ packages.xmonad-damianfral ];
         buildInputs = with pkgs; with pkgs.haskellPackages; [
           actionlint
           cabal-install

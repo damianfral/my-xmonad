@@ -1,6 +1,6 @@
-name:                my-xmonad
+name:                xmonad-damianfral
 version:             0.1.0.1
-github:              "damianfral/my-xmonad"
+github:              "damianfral/xmonad-damianfral"
 license:             BSD3
 author:              "damianfral"
 maintainer:          "huevofritopamojarpan@gmail.com"
@@ -28,7 +28,7 @@ dependencies:
 
 executables:
 
-  my-xmonad:
+  xmonad-damianfral:
     main         : Main.hs
     source-dirs  : ./src
 
