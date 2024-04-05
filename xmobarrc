@@ -1,0 +1,20 @@
+Config
+    { font          = "AnonymicePro Nerd Font 11"
+    , bgColor       = "#0a0f14"
+    , fgColor       = "#aaafa4"
+    , border        = NoBorder
+    , position      = Top
+    , commands      =
+        [ Run StdinReader
+        , Run MultiCpu    ["-t", "<total>%"] 10
+        , Run Memory      ["-t", "<usedratio>%"] 10
+        , Run Swap        ["-t", "<usedratio>%"]  10
+        , Run Battery     ["-t", "<left>% <timeleft>"] 600
+        , Run Date        "%Y/%m/%d %a %H:%M" "date" 600
+        , Run DynNetwork  ["-t", "<rx>K/<tx>K"] 5
+        , Run ThermalZone 0 ["-t","<temp>°C"] 100
+        ]
+    , sepChar  = "%"
+    , alignSep = "}{"
+    , template = " %StdinReader% }{ CPU %multicpu% %thermal0%  |  MEM %memory% %swap%  |  NET %dynnetwork%  |  BAT %battery%  |  %date% "
+    }
