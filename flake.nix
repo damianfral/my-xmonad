@@ -35,9 +35,15 @@
             "LICENSE"
           ];
         };
+
     in
     {
       overlays.default = final: prev: {
+        xmonad-damianfral = prev.haskell.lib.justStaticExecutables (
+          final.haskellPackages.xmonad-damianfral.overrideAttrs (oldAttrs: {
+            configureFlags = oldAttrs.configureFlags ++ [ "--ghc-option=-O2" ];
+          })
+        );
         haskellPackages = prev.haskellPackages.override (old: {
           overrides = final.lib.composeExtensions
             (old.overrides or (_: _: { }))
@@ -77,11 +83,7 @@
       packages.default = packages.xmonad-damianfral;
 
       apps.xmonad-damianfral = flake-utils.lib.mkApp {
-        drv = pkgs.haskell.lib.justStaticExecutables (
-          packages.xmonad-damianfral.overrideAttrs (oldAttrs: {
-            configureFlags = oldAttrs.configureFlags ++ [ "--ghc-option=-O2" ];
-          })
-        );
+        drv = packages.xmonad-damianfral;
       };
       apps.default = apps.xmonad-damianfral;
 
