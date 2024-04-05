@@ -60,6 +60,40 @@
         });
       };
 
+      nixosModules.xmonad-damianfral = { pkgs, lib, config, ... }: with lib;
+        let cfg = config.services.xserver.windowManager.xmonad-damianfral; in {
+          options = {
+            services.xserver.windowManager.xmonad-damianfral = {
+              enable = mkEnableOption "xmonad-damianfral";
+              xmobarConfig = mkOption {
+                type = types.path;
+                default = ./xmobarrc;
+              };
+              wallpaper = mkOption {
+                type = types.str;
+                default = "${pkgs.nixos-artwork.wallpapers.dracula}/share/backgrounds/nixos/nix-wallpaper-dracula.png";
+              };
+            };
+          };
+          config = mkIf cfg.enable {
+            services.xserver.enable = true;
+            services.xserver.displayManager.defaultSession = "xmonad-damianfral";
+            services.xserver.displayManager.session = [{
+              manage = "desktop";
+              name = "xmonad-damianfral";
+              start = ''
+                systemd-cat -t xmonad-damianfral -- \
+                  ${lib.getExe self.packages.${pkgs.system}.xmonad-damianfral} \
+                   --xmobar-config ${cfg.xmobarConfig} \
+                   --wallpaper ${cfg.wallpaper} &
+                waitPID=$!
+              '';
+            }];
+            environment.systemPackages = with pkgs;
+              [ xmobar xwallpaper kitty maim pulsemixer playerctl ];
+          };
+
+        };
     }
     //
     flake-utils.lib.eachDefaultSystem (system:
@@ -85,6 +119,9 @@
       apps.xmonad-damianfral = flake-utils.lib.mkApp {
         drv = packages.xmonad-damianfral;
       };
+      apps.xmonad-damianfral-vm-interactive = flake-utils.lib.mkApp {
+        drv = checks.xmonad-damianfral-vm.driverInteractive;
+      };
       apps.default = apps.xmonad-damianfral;
 
       devShells.default = pkgs.haskellPackages.shellFor {
@@ -103,9 +140,70 @@
         inherit (precommitCheck) shellHook;
       };
 
-      checks = { pre-commit-check = precommitCheck; };
-    });
+      checks = rec {
+        pre-commit-check = precommitCheck;
+        xmonad-damianfral-screenshot = pkgs.stdenv.mkDerivation {
+          name = "xmonad-damianfral-screenshot";
+          phases = [ "checkPhase" "installPhase" ];
+          src = ./golden-screenshots;
+          buildInputs = [ pkgs.imagemagick xmonad-damianfral-vm ];
+          checkPhase = ''
+            METRIC=$(magick compare -metric AE ${xmonad-damianfral-vm}/screenshot.000.png $src/screenshot.000.png )
+            THRESHOLD=(( 16 * 1080 / 4))
+            ((METRIC < THRESHOLD)) && true
+          '';
+          installPhase = ''
+            mkdir -p $out
+            cp $src/screenshot.000.png $out/screenshot.a.png
+            cp ${xmonad-damianfral-vm}/screenshot.000.png $out/screnshot.b.png
+          '';
 
+        };
+        xmonad-damianfral-vm = let name = "test_node"; in nixpkgs.lib.nixos.runTest {
+          name = "nixos-test-xmonad-damianfral";
+          hostPkgs = pkgs;
+          enableOCR = false;
+          nodes."${name}" = {
+            imports = [ self.nixosModules.xmonad-damianfral ];
+            boot.loader.systemd-boot.enable = true;
+            boot.loader.efi.canTouchEfiVariables = true;
+            services.xserver.displayManager.lightdm.enable = true;
+            services.xserver.displayManager.autoLogin.enable = true;
+            services.xserver.displayManager.autoLogin.user = "test";
+            environment.systemPackages = with pkgs; [ xdotool ];
+            users.users.test = {
+              description = "test";
+              initialPassword = "0000";
+              isNormalUser = true;
+              extraGroups = [ "wheel" "sudo" ];
+            };
+            virtualisation.graphics = true;
+            virtualisation.cores = 2;
+            virtualisation.resolution = { x = 1920; y = 1080; };
+
+            services.xserver.windowManager.xmonad-damianfral.enable = true;
+          };
+          testScript = ''
+            start_all()
+
+            with subtest("it launches basic services"):
+              ${name}.wait_for_unit("default.target")
+              ${name}.wait_for_unit("network.target")
+              ${name}.wait_for_unit("graphical.target")
+              ${name}.wait_for_unit("display-manager.service")
+              ${name}.wait_for_unit("multi-user.target")
+
+            with subtest("it logs in and starts xmonad"):
+              ${name}.wait_for_x()
+              ${name}.succeed("pgrep xmonad")
+
+            with subtest("it looks as expected"):
+              # Just take a screenshot, another derivation will check it.
+              ${name}.screenshot("screenshot.000.png")
+          '';
+        };
+      };
+    });
   nixConfig = {
     extra-substituters = "https://opensource.cachix.org";
     extra-trusted-public-keys = "opensource.cachix.org-1:6t9YnrHI+t4lUilDKP2sNvmFA9LCKdShfrtwPqj2vKc=";
