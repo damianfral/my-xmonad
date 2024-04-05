@@ -1,23 +1,30 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
 
 import Control.Monad (void)
+import Data.List (isInfixOf)
 import qualified Data.Map as M
+import GHC.Generics
+import Options.Generic
 import System.Exit
 import System.IO
 import XMonad
 import XMonad.Actions.CycleWS (toggleWS)
-import XMonad.Actions.UpdatePointer
+import XMonad.Actions.UpdatePointer (updatePointer)
 import XMonad.Hooks.DynamicLog
-import XMonad.Hooks.EwmhDesktops
+import XMonad.Hooks.EwmhDesktops (ewmh, ewmhFullscreen)
 import XMonad.Hooks.ManageDocks
 import XMonad.Layout.LayoutModifier
 import XMonad.Layout.NoBorders
 import XMonad.Prompt
-import XMonad.Prompt.Pass
+import XMonad.Prompt.Pass (passGeneratePrompt)
 import XMonad.Prompt.RunOrRaise (runOrRaisePrompt)
 import qualified XMonad.StackSet as W
 import XMonad.Util.Run (runProcessWithInput, spawnPipe)
+
+-- import OptPar
 
 ------------------------------------------------------------------------
 
@@ -63,8 +70,8 @@ myWorkspaces = show @Int <$> [1 .. 9]
 -- To match on the WM_NAME, you can use 'title' in the same way that
 -- 'className' and 'resource' are used below.
 --
-myManageHook :: ManageHook
-myManageHook = composeAll []
+-- myManageHook :: ManageHook
+-- myManageHook = composeAll []
 
 ------------------------------------------------------------------------
 -- Layouts
@@ -109,7 +116,8 @@ myPromptConfig =
       fgColor = "#002b36",
       bgHLight = "#002b36",
       fgHLight = "#f7f9fb",
-      height = 16
+      height = 16,
+      complCaseSensitivity = CaseInSensitive
     }
 
 data GreenclipPrompt = GreenclipPrompt
@@ -161,13 +169,20 @@ myKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
 myKeys conf@(XConfig {XMonad.modMask = modMask'}) =
   M.fromList $
     ----------------------------------------------------------------------
+    ----------------------------------------------------------------------
+    -- Custom key bindings
     -- Custom key bindings
     --
+    --
 
+    ----------------------------------------------------------------------
+    -- Custom key bindings
+    --
     [ -- Start a terminal. Terminal to start is specified by myTerminal variable.
       ((modMask' .|. shiftMask, xK_Return), spawn $ XMonad.terminal conf),
       -- Takes screenshot.
-      ((0, 0x1008ff81), spawn "flameshot gui"),
+      ((0, 0x1008ff81), spawn "maim -s"),
+      ((modMask', xK_p), spawn "maim -s"),
       ((modMask', xK_r), runOrRaisePrompt myPromptConfig),
       -- Multimedia keys
       ((0, xf86AudioLowerVolume), spawn "pulsemixer --change-volume -5 --max-volume 100"),
@@ -178,7 +193,9 @@ myKeys conf@(XConfig {XMonad.modMask = modMask'}) =
       ((0, xf86AudioPrev), spawn "playerctl previous"),
       ((0, xf86AudioPlay), spawn "playerctl play-pause"),
       ((0, xf86AudioStop), spawn "playerctl stop"),
-      ((modMask', xK_c), greenclipPrompt myPromptConfig),
+      ( (modMask', xK_c),
+        greenclipPrompt $ myPromptConfig {searchPredicate = isInfixOf}
+      ),
       ((modMask' .|. shiftMask, xK_p), XMonad.Prompt.Pass.passGeneratePrompt myPromptConfig),
       ((modMask', xK_e), enableExternalMonitor),
       ((modMask' .|. shiftMask, xK_e), disableExternalMonitor),
@@ -234,6 +251,12 @@ myKeys conf@(XConfig {XMonad.modMask = modMask'}) =
     ]
       ++
       -- mod-[1..9], Switch to workspace N
+      -- mod-[1..9], Switch to workspace N
+      -- mod-[1..9], Switch to workspace N
+      -- mod-[1..9], Switch to workspace N
+      -- mod-shift-[1..9], Move client to workspace N
+      -- mod-shift-[1..9], Move client to workspace N
+      -- mod-shift-[1..9], Move client to workspace N
       -- mod-shift-[1..9], Move client to workspace N
       [ ((m .|. modMask', k), windows $ f i)
         | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9],
@@ -267,8 +290,19 @@ myMouseBindings (XConfig {XMonad.modMask = modMask'}) =
 -- per-workspace layout choices.
 --
 -- By default, do nothing.
-myStartupHook :: X ()
-myStartupHook = pure ()
+myStartupHook :: String -> X ()
+myStartupHook wallpaperPath = spawn $ "xwallpaper --zoom " <> wallpaperPath
+
+------------------------------------------------------------------------
+
+data CLIOptions = CLIOptions
+  { xmobarConfig :: String,
+    wallpaper :: String
+  }
+  deriving (Generic)
+
+instance ParseRecord CLIOptions where
+  parseRecord = parseRecordWithModifiers lispCaseModifiers
 
 ------------------------------------------------------------------------
 -- Run xmonad with all the defaults we set up. --
@@ -276,48 +310,43 @@ myStartupHook = pure ()
 
 main :: IO ()
 main = do
-  xmproc <- spawnPipe "xmobar ~/.xmobarrc"
-  xmonad $
-    docks $
-      ewmhFullscreen . ewmh $
-        defaults
-          { manageHook = manageDocks <+> manageHook def,
-            layoutHook = defaultLayouts,
-            logHook = do
-              dynamicLogWithPP
-                xmobarPP
-                  { ppOutput = hPutStrLn xmproc,
-                    ppCurrent = xmobarColor "#f7f9fb" "",
-                    ppHidden = xmobarColor "#657b83" "",
-                    ppWsSep = xmobarColor "#002b36" "" " ",
-                    ppSep = xmobarColor "#002b36" "" "    ",
-                    ppUrgent = xmobarColor "#bf8b56" "",
-                    ppTitle = xmobarColor "#f7f9fb" "",
-                    ppLayout = const "" -- to disable the layout info on xmobar
-                  }
-              updatePointer (0.5, 0.5) (0, 0)
-          }
-
-------------------------------------------------------------------------
--- Combine it all together
--- A structure containing your configuration settings, overriding
--- fields in the default config. Any you don't override, will
--- use the defaults defined in xmonad/XMonad/Config.hs
---
--- No need to modify this.
---
-defaults :: XConfig (Choose Tall (Choose (Mirror Tall) Full))
-defaults =
-  def
-    { terminal = myTerminal,
-      focusFollowsMouse = myFocusFollowsMouse,
-      borderWidth = myBorderWidth,
-      modMask = myModMask,
-      workspaces = myWorkspaces,
-      normalBorderColor = myNormalBorderColor,
-      focusedBorderColor = myFocusedBorderColor,
-      keys = myKeys,
-      mouseBindings = myMouseBindings,
-      manageHook = myManageHook,
-      startupHook = myStartupHook
-    }
+  CLIOptions {..} <- getRecord "xmonad-damianfral"
+  xmproc <- spawnPipe $ "xmobar " <> xmobarConfig
+  let xConfig = docks $ ewmhFullscreen $ ewmh $ mkXConfig xmproc wallpaper
+  launch xConfig =<< getDirectories
+  where
+    mkXConfig xmproc wallpaper =
+      ------------------------------------------------------------------------
+      -- Combine it all together
+      -- A structure containing your configuration settings, overriding
+      -- fields in the default config. Any you don't override, will
+      -- use the defaults defined in xmonad/XMonad/Config.hs
+      --
+      def
+        { terminal = myTerminal,
+          focusFollowsMouse = myFocusFollowsMouse,
+          borderWidth = myBorderWidth,
+          modMask = myModMask,
+          workspaces = myWorkspaces,
+          normalBorderColor = myNormalBorderColor,
+          focusedBorderColor = myFocusedBorderColor,
+          keys = myKeys,
+          mouseBindings = myMouseBindings,
+          -- manageHook = myManageHook,
+          startupHook = myStartupHook wallpaper,
+          manageHook = manageDocks <+> manageHook def,
+          layoutHook = defaultLayouts,
+          logHook = do
+            dynamicLogWithPP
+              xmobarPP
+                { ppOutput = hPutStrLn xmproc,
+                  ppCurrent = xmobarColor "#f7f9fb" "",
+                  ppHidden = xmobarColor "#657b83" "",
+                  ppWsSep = xmobarColor "#002b36" "" " ",
+                  ppSep = xmobarColor "#002b36" "" "    ",
+                  ppUrgent = xmobarColor "#bf8b56" "",
+                  ppTitle = xmobarColor "#f7f9fb" "",
+                  ppLayout = const "" -- to disable the layout info on xmobar
+                }
+            updatePointer (0.5, 0.5) (0, 0)
+        }

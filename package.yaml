@@ -25,6 +25,7 @@ dependencies:
 - containers
 - xmonad
 - xmonad-contrib
+- optparse-generic
 
 executables:
 
