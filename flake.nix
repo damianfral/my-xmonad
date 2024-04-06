@@ -85,7 +85,8 @@
               '';
             }];
             environment.systemPackages = with pkgs;
-              [ xmobar xwallpaper kitty maim pulsemixer playerctl ];
+              let anonymousNerdFont = pkgs.nerdfonts.override { fonts = [ "AnonymousPro" ]; };
+              in [ xmobar xwallpaper kitty maim pulsemixer playerctl anonymousNerdFont ];
           };
 
         };
