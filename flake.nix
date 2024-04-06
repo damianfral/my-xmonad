@@ -28,12 +28,7 @@
       filteredSrc =
         nix-filter.lib {
           root = ./.;
-          include = [
-            "src/"
-            "test/"
-            "package.yaml"
-            "LICENSE"
-          ];
+          include = [ "src/" "test/" "package.yaml" "LICENSE" ];
         };
 
     in
