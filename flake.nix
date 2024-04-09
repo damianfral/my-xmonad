@@ -34,20 +34,40 @@
 
     in
     {
-      overlays.default = final: prev: {
-        xmonad-damianfral = prev.haskell.lib.justStaticExecutables (
-          final.haskellPackages.xmonad-damianfral.overrideAttrs (oldAttrs: {
-            configureFlags = oldAttrs.configureFlags ++ [ "--ghc-option=-O2" ];
-          })
-        );
-        haskellPackages = prev.haskellPackages.override (old: {
-          overrides = final.lib.composeExtensions
-            (old.overrides or (_: _: { }))
-            (self: super: {
-              xmonad-damianfral = self.callCabal2nix "xmonad-damianfral" filteredSrc { };
-            });
-        });
-      };
+      overlays.default = final: prev:
+        let
+          tools = with final; [
+            xmobar
+            xwallpaper
+            kitty
+            maim
+            pulsemixer
+            playerctl
+            (nerdfonts.override { fonts = [ "AnonymousPro" ]; })
+          ];
+        in
+        {
+          xmonad-damianfral = prev.haskell.lib.justStaticExecutables (
+            final.haskellPackages.xmonad-damianfral.overrideAttrs (oldAttrs: {
+              configureFlags = oldAttrs.configureFlags ++ [ "--ghc-option=-O2" ];
+            })
+          );
+          haskellPackages = prev.haskellPackages.override (old: {
+            overrides = final.lib.composeExtensions
+              (old.overrides or (_: _: { }))
+              (self: super: {
+                xmonad-damianfral = (self.callCabal2nix "xmonad-damianfral" filteredSrc { }).overrideAttrs (oldAttrs: {
+                  nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ final.makeWrapper ];
+                  postInstall =
+                    (oldAttrs.postInstall or "") +
+                    ''
+                      wrapProgram $out/bin/xmonad-damianfral \
+                        --suffix PATH : ${final.lib.makeBinPath tools}
+                    '';
+                });
+              });
+          });
+        };
       overlays.xmonad-contrib = final: prev: {
         haskellPackages = prev.haskellPackages.override (old: {
           overrides = final.lib.composeExtensions
@@ -85,11 +105,7 @@
                 waitPID=$!
               '';
             }];
-            environment.systemPackages = with pkgs;
-              let anonymousNerdFont = pkgs.nerdfonts.override { fonts = [ "AnonymousPro" ]; };
-              in [ xmobar xwallpaper kitty maim pulsemixer playerctl anonymousNerdFont ];
           };
-
         };
     }
     //
