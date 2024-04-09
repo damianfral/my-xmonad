@@ -170,7 +170,6 @@
             services.xserver.displayManager.lightdm.enable = true;
             services.xserver.displayManager.autoLogin.enable = true;
             services.xserver.displayManager.autoLogin.user = "test";
-            environment.systemPackages = with pkgs; [ xdotool ];
             users.users.test = {
               description = "test";
               initialPassword = "0000";
