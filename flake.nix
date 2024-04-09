@@ -43,7 +43,6 @@
           tools = with final; [
             xmobar
             xwallpaper
-            kitty
             maim
             pulsemixer
             playerctl
@@ -93,6 +92,10 @@
                 type = types.str;
                 default = "${pkgs.nixos-artwork.wallpapers.dracula}/share/backgrounds/nixos/nix-wallpaper-dracula.png";
               };
+              terminal = mkOption {
+                type = types.path;
+                default = pkgs.kitty;
+              };
             };
           };
           config = mkIf cfg.enable {
@@ -105,7 +108,8 @@
                 systemd-cat -t xmonad-damianfral -- \
                   ${lib.getExe self.packages.${pkgs.system}.xmonad-damianfral} \
                    --xmobar-config ${cfg.xmobarConfig} \
-                   --wallpaper ${cfg.wallpaper} &
+                   --wallpaper ${cfg.wallpaper} \
+                   --term ${cfg.terminal} &
                 waitPID=$!
               '';
             }];

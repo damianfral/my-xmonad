@@ -46,7 +46,7 @@ disableExternalMonitor = spawn "xrandr --output HDMI-2 --off"
 -- certain contrib modules.
 --
 myTerminal :: String
-myTerminal = "kitty"
+myTerminal = "$TERMINAL"
 
 ------------------------------------------------------------------------
 -- Workspaces
@@ -297,7 +297,8 @@ myStartupHook wallpaperPath = spawn $ "xwallpaper --zoom " <> wallpaperPath
 
 data CLIOptions = CLIOptions
   { xmobarConfig :: String,
-    wallpaper :: String
+    wallpaper :: String,
+    term :: String
   }
   deriving (Generic)
 
@@ -312,10 +313,10 @@ main :: IO ()
 main = do
   CLIOptions {..} <- getRecord "xmonad-damianfral"
   xmproc <- spawnPipe $ "xmobar " <> xmobarConfig
-  let xConfig = docks $ ewmhFullscreen $ ewmh $ mkXConfig xmproc wallpaper
+  let xConfig = docks $ ewmhFullscreen $ ewmh $ mkXConfig xmproc wallpaper term
   launch xConfig =<< getDirectories
   where
-    mkXConfig xmproc wallpaper =
+    mkXConfig xmproc wallpaper term =
       ------------------------------------------------------------------------
       -- Combine it all together
       -- A structure containing your configuration settings, overriding
@@ -323,7 +324,7 @@ main = do
       -- use the defaults defined in xmonad/XMonad/Config.hs
       --
       def
-        { terminal = myTerminal,
+        { terminal = term,
           focusFollowsMouse = myFocusFollowsMouse,
           borderWidth = myBorderWidth,
           modMask = myModMask,
