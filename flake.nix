@@ -43,7 +43,6 @@
           tools = with final; [
             xmobar
             xwallpaper
-            kitty
             maim
             pulsemixer
             playerctl

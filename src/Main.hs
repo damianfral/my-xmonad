@@ -46,7 +46,7 @@ disableExternalMonitor = spawn "xrandr --output HDMI-2 --off"
 -- certain contrib modules.
 --
 myTerminal :: String
-myTerminal = "kitty"
+myTerminal = "$TERMINAL"
 
 ------------------------------------------------------------------------
 -- Workspaces
