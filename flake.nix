@@ -36,6 +36,10 @@
     {
       overlays.default = final: prev:
         let
+          xmobar = final.haskell.lib.justStaticExecutables
+            (prev.xmobar.overrideAttrs (oldAttrs: {
+              configureFlags = oldAttrs.configureFlags ++ [ "--ghc-option=-O2" ];
+            }));
           tools = with final; [
             xmobar
             xwallpaper
