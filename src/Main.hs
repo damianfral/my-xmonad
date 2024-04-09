@@ -24,8 +24,6 @@ import XMonad.Prompt.RunOrRaise (runOrRaisePrompt)
 import qualified XMonad.StackSet as W
 import XMonad.Util.Run (runProcessWithInput, spawnPipe)
 
--- import OptPar
-
 ------------------------------------------------------------------------
 
 enableLaptopMonitor :: X ()
@@ -168,13 +166,6 @@ xf86AudioStop = 0x1008ff15
 myKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
 myKeys conf@(XConfig {XMonad.modMask = modMask'}) =
   M.fromList $
-    ----------------------------------------------------------------------
-    ----------------------------------------------------------------------
-    -- Custom key bindings
-    -- Custom key bindings
-    --
-    --
-
     ----------------------------------------------------------------------
     -- Custom key bindings
     --
