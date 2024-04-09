@@ -175,48 +175,50 @@
           '';
 
         };
-        xmonad-damianfral-vm = let name = "test_node"; in inputs.nixpkgs-stable.lib.nixos.runTest {
-          name = "nixos-test-xmonad-damianfral";
-          hostPkgs = import inputs.nixpkgs-stable { system = "x86_64-linux"; };
-          enableOCR = false;
-          nodes."${name}" = {
-            imports = [ self.nixosModules.xmonad-damianfral ];
-            boot.loader.systemd-boot.enable = true;
-            boot.loader.efi.canTouchEfiVariables = true;
-            services.xserver.displayManager.lightdm.enable = true;
-            services.xserver.displayManager.autoLogin.enable = true;
-            services.xserver.displayManager.autoLogin.user = "test";
-            users.users.test = {
-              description = "test";
-              initialPassword = "0000";
-              isNormalUser = true;
-              extraGroups = [ "wheel" "sudo" ];
+        xmonad-damianfral-vm =
+          let name = "test_node";
+          in inputs.nixpkgs-stable.lib.nixos.runTest {
+            name = "nixos-test-xmonad-damianfral";
+            hostPkgs = import inputs.nixpkgs-stable { system = "x86_64-linux"; };
+            enableOCR = false;
+            nodes."${name}" = {
+              imports = [ self.nixosModules.xmonad-damianfral ];
+              boot.loader.systemd-boot.enable = true;
+              boot.loader.efi.canTouchEfiVariables = true;
+              services.xserver.displayManager.lightdm.enable = true;
+              services.xserver.displayManager.autoLogin.enable = true;
+              services.xserver.displayManager.autoLogin.user = "test";
+              users.users.test = {
+                description = "test";
+                initialPassword = "0000";
+                isNormalUser = true;
+                extraGroups = [ "wheel" "sudo" ];
+              };
+              virtualisation.graphics = true;
+              virtualisation.cores = 2;
+              virtualisation.resolution = { x = 1920; y = 1080; };
+
+              services.xserver.windowManager.xmonad-damianfral.enable = true;
             };
-            virtualisation.graphics = true;
-            virtualisation.cores = 2;
-            virtualisation.resolution = { x = 1920; y = 1080; };
+            testScript = ''
+              start_all()
 
-            services.xserver.windowManager.xmonad-damianfral.enable = true;
+              with subtest("it launches basic services"):
+                ${name}.wait_for_unit("default.target")
+                ${name}.wait_for_unit("network.target")
+                ${name}.wait_for_unit("graphical.target")
+                ${name}.wait_for_unit("display-manager.service")
+                ${name}.wait_for_unit("multi-user.target")
+
+              with subtest("it logs in and starts xmonad"):
+                ${name}.wait_for_x()
+                ${name}.succeed("pgrep xmonad")
+
+              with subtest("it looks as expected"):
+                # Just take a screenshot, another derivation will check it.
+                ${name}.screenshot("screenshot.000.png")
+            '';
           };
-          testScript = ''
-            start_all()
-
-            with subtest("it launches basic services"):
-              ${name}.wait_for_unit("default.target")
-              ${name}.wait_for_unit("network.target")
-              ${name}.wait_for_unit("graphical.target")
-              ${name}.wait_for_unit("display-manager.service")
-              ${name}.wait_for_unit("multi-user.target")
-
-            with subtest("it logs in and starts xmonad"):
-              ${name}.wait_for_x()
-              ${name}.succeed("pgrep xmonad")
-
-            with subtest("it looks as expected"):
-              # Just take a screenshot, another derivation will check it.
-              ${name}.screenshot("screenshot.000.png")
-          '';
-        };
       };
     });
   nixConfig = {
