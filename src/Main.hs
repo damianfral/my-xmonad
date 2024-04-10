@@ -6,6 +6,7 @@
 import Control.Monad (void)
 import Data.List (isInfixOf)
 import qualified Data.Map as M
+import Data.Time
 import GHC.Generics
 import Options.Generic
 import System.Exit
@@ -163,6 +164,22 @@ xf86AudioPlay = 0x1008ff14
 xf86AudioStop :: KeySym
 xf86AudioStop = 0x1008ff15
 
+takeScrenshot :: IO ()
+takeScrenshot = do
+  now <- getCurrentTime
+  let format = "%Y%m%H%M%S"
+  let fomattedDate = formatTime defaultTimeLocale format now
+  let filename = "screenshot-" <> fomattedDate <> ".png"
+  let maimCmd = "maim -sulc 0.9,0.6,0.3,0.4 " <> filename
+  let notifyCmd =
+        unwords
+          [ "notify-send --action='xdg-open",
+            filename <> "'",
+            "screenshot",
+            filename
+          ]
+  spawn $ unwords [maimCmd, "&&", notifyCmd]
+
 myKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
 myKeys conf@(XConfig {XMonad.modMask = modMask'}) =
   M.fromList $
@@ -172,8 +189,8 @@ myKeys conf@(XConfig {XMonad.modMask = modMask'}) =
     [ -- Start a terminal. Terminal to start is specified by myTerminal variable.
       ((modMask' .|. shiftMask, xK_Return), spawn $ XMonad.terminal conf),
       -- Takes screenshot.
-      ((0, 0x1008ff81), spawn "maim -s"),
-      ((modMask', xK_p), spawn "maim -s"),
+      ((0, 0x1008ff81), liftIO takeScrenshot),
+      ((modMask', xK_p), liftIO takeScrenshot),
       ((modMask', xK_r), runOrRaisePrompt myPromptConfig),
       -- Multimedia keys
       ((0, xf86AudioLowerVolume), spawn "pulsemixer --change-volume -5 --max-volume 100"),
