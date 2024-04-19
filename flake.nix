@@ -80,7 +80,11 @@
       };
 
       nixosModules.xmonad-damianfral = { pkgs, lib, config, ... }: with lib;
-        let cfg = config.services.xserver.windowManager.xmonad-damianfral; in {
+        let
+          cfg = config.services.xserver.windowManager.xmonad-damianfral;
+          mkIfEnable = mkIf cfg.enable;
+        in
+        {
           options = {
             services.xserver.windowManager.xmonad-damianfral = {
               enable = mkEnableOption "xmonad-damianfral";
@@ -98,7 +102,8 @@
               };
             };
           };
-          config = mkIf cfg.enable {
+
+          config = mkIfEnable {
             services.xserver.enable = true;
             services.xserver.displayManager.defaultSession = "xmonad-damianfral";
             services.xserver.displayManager.session = [{
