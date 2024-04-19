@@ -105,7 +105,6 @@
 
           config = mkIfEnable {
             services.xserver.enable = true;
-            services.xserver.displayManager.defaultSession = "xmonad-damianfral";
             services.xserver.displayManager.session = [{
               manage = "desktop";
               name = "xmonad-damianfral";
