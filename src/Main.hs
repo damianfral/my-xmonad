@@ -10,6 +10,7 @@ import Data.Time
 import GHC.Generics
 import Options.Generic
 import System.Exit
+import System.FilePath ((<.>), (</>))
 import System.IO
 import XMonad
 import XMonad.Actions.CycleWS (toggleWS)
@@ -164,12 +165,12 @@ xf86AudioPlay = 0x1008ff14
 xf86AudioStop :: KeySym
 xf86AudioStop = 0x1008ff15
 
-takeScrenshot :: IO ()
-takeScrenshot = do
+takeScrenshot :: FilePath -> IO ()
+takeScrenshot screenshotDir = do
   now <- getCurrentTime
   let format = "%Y%m%H%M%S"
   let fomattedDate = formatTime defaultTimeLocale format now
-  let filename = "screenshot-" <> fomattedDate <> ".png"
+  let filename = "~" </> "screenshot-" <> fomattedDate <.> "png"
   let maimCmd = "maim -sulc 0.9,0.6,0.3,0.4 " <> filename
   let notifyCmd =
         unwords
@@ -180,8 +181,8 @@ takeScrenshot = do
           ]
   spawn $ unwords [maimCmd, "&&", notifyCmd]
 
-myKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
-myKeys conf@(XConfig {XMonad.modMask = modMask'}) =
+myKeys :: FilePath -> XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
+myKeys screenshotDir conf@(XConfig {XMonad.modMask = modMask'}) =
   M.fromList $
     ----------------------------------------------------------------------
     -- Custom key bindings
@@ -189,8 +190,8 @@ myKeys conf@(XConfig {XMonad.modMask = modMask'}) =
     [ -- Start a terminal. Terminal to start is specified by myTerminal variable.
       ((modMask' .|. shiftMask, xK_Return), spawn $ XMonad.terminal conf),
       -- Takes screenshot.
-      ((0, 0x1008ff81), liftIO takeScrenshot),
-      ((modMask', xK_p), liftIO takeScrenshot),
+      ((0, 0x1008ff81), liftIO $ takeScrenshot screenshotDir),
+      ((modMask', xK_p), liftIO $ takeScrenshot screenshotDir),
       ((modMask', xK_r), runOrRaisePrompt myPromptConfig),
       -- Multimedia keys
       ((0, xf86AudioLowerVolume), spawn "pulsemixer --change-volume -5 --max-volume 100"),
@@ -306,7 +307,8 @@ myStartupHook wallpaperPath = spawn $ "xwallpaper --zoom " <> wallpaperPath
 data CLIOptions = CLIOptions
   { xmobarConfig :: String,
     wallpaper :: String,
-    term :: String
+    term :: String,
+    screenshotDir :: String
   }
   deriving (Generic)
 
@@ -321,10 +323,12 @@ main :: IO ()
 main = do
   CLIOptions {..} <- getRecord "xmonad-damianfral"
   xmproc <- spawnPipe $ "xmobar " <> xmobarConfig
-  let xConfig = docks $ ewmhFullscreen $ ewmh $ mkXConfig xmproc wallpaper term
+  let xConfig =
+        docks . ewmhFullscreen . ewmh $
+          mkXConfig xmproc wallpaper term screenshotDir
   launch xConfig =<< getDirectories
   where
-    mkXConfig xmproc wallpaper term =
+    mkXConfig xmproc wallpaper term screenshotDir =
       ------------------------------------------------------------------------
       -- Combine it all together
       -- A structure containing your configuration settings, overriding
@@ -339,7 +343,7 @@ main = do
           workspaces = myWorkspaces,
           normalBorderColor = myNormalBorderColor,
           focusedBorderColor = myFocusedBorderColor,
-          keys = myKeys,
+          keys = myKeys screenshotDir,
           mouseBindings = myMouseBindings,
           -- manageHook = myManageHook,
           startupHook = myStartupHook wallpaper,

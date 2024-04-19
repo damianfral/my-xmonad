@@ -32,6 +32,7 @@ executable xmonad-damianfral
   build-depends:
       base >=4.7 && <5
     , containers
+    , filepath
     , optparse-generic
     , time
     , xmonad

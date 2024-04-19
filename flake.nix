@@ -101,6 +101,10 @@
                   + "/share/backgrounds/nixos/nix-wallpaper-dracula.png";
                 };
               terminal = mkPackageOption pkgs "kitty" { };
+              screenshotDir = mkOption {
+                type = types.str;
+                default = "~/screenshots";
+              };
             };
           };
 
@@ -115,7 +119,8 @@
                     xmonad-damianfral \
                      --xmobar-config ${cfg.xmobarConfig} \
                      --wallpaper ${cfg.wallpaper} \
-                     --term ${getExe cfg.terminal} &
+                     --term ${getExe cfg.terminal} \
+                     --screenshot-dir ${cfg.screenshotDir} &
                   waitPID=$!
                 '';
               }];
