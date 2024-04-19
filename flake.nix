@@ -59,15 +59,17 @@
             overrides = final.lib.composeExtensions
               (old.overrides or (_: _: { }))
               (self: super: {
-                xmonad-damianfral = (self.callCabal2nix "xmonad-damianfral" filteredSrc { }).overrideAttrs (oldAttrs: {
-                  nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ final.makeWrapper ];
-                  postInstall =
-                    (oldAttrs.postInstall or "") +
-                    ''
-                      wrapProgram $out/bin/xmonad-damianfral \
-                        --suffix PATH : ${final.lib.makeBinPath tools}
-                    '';
-                });
+                xmonad-damianfral =
+                  (self.callCabal2nix "xmonad-damianfral" filteredSrc { }).overrideAttrs (oldAttrs: {
+                    nativeBuildInputs =
+                      oldAttrs.nativeBuildInputs ++ [ final.makeWrapper ];
+                    postInstall =
+                      (oldAttrs.postInstall or "") +
+                      ''
+                        wrapProgram $out/bin/xmonad-damianfral \
+                          --suffix PATH : ${final.lib.makeBinPath tools}
+                      '';
+                  });
               });
           });
         };
@@ -92,31 +94,34 @@
                 type = types.path;
                 default = ./xmobarrc;
               };
-              wallpaper = mkOption {
-                type = types.str;
-                default = "${pkgs.nixos-artwork.wallpapers.dracula}/share/backgrounds/nixos/nix-wallpaper-dracula.png";
-              };
-              terminal = mkOption {
-                type = types.path;
-                default = pkgs.kitty;
-              };
+              wallpaper =
+                mkOption {
+                  type = types.path;
+                  default = pkgs.nixos-artwork.wallpapers.dracula
+                  + "/share/backgrounds/nixos/nix-wallpaper-dracula.png";
+                };
+              terminal = mkPackageOption pkgs "kitty" { };
             };
           };
 
           config = mkIfEnable {
             services.xserver.enable = true;
-            services.xserver.displayManager.session = [{
-              manage = "desktop";
-              name = "xmonad-damianfral";
-              start = ''
-                systemd-cat -t xmonad-damianfral -- \
-                  ${lib.getExe self.packages.${pkgs.system}.xmonad-damianfral} \
-                   --xmobar-config ${cfg.xmobarConfig} \
-                   --wallpaper ${cfg.wallpaper} \
-                   --term ${cfg.terminal} &
-                waitPID=$!
-              '';
-            }];
+            services.xserver.displayManager = {
+              session = [{
+                manage = "desktop";
+                name = "xmonad-damianfral";
+                start = ''
+                  systemd-cat -t xmonad-damianfral -- \
+                    xmonad-damianfral \
+                     --xmobar-config ${cfg.xmobarConfig} \
+                     --wallpaper ${cfg.wallpaper} \
+                     --term ${getExe cfg.terminal} &
+                  waitPID=$!
+                '';
+              }];
+            };
+            environment.systemPackages =
+              [ self.packages.x86_64-linux.xmonad-damianfral cfg.terminal ];
           };
         };
     }
@@ -206,7 +211,6 @@
               virtualisation.graphics = true;
               virtualisation.cores = 2;
               virtualisation.resolution = { x = 1920; y = 1080; };
-
               services.xserver.windowManager.xmonad-damianfral.enable = true;
             };
             testScript = ''
