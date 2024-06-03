@@ -2,7 +2,7 @@
   description = "TBD";
 
   inputs = {
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/release-23.11";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/release-24.05";
     nixpkgs.url = "github:NixOS/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
     nix-filter.url = "github:numtide/nix-filter";
