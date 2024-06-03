@@ -24,7 +24,7 @@
     let
       pkgsFor = system: import nixpkgs {
         inherit system;
-        overlays = [ self.overlays.default self.overlays.xmonad-contrib ];
+        overlays = [ self.overlays.default ] ++ inputs.xmonad-contrib.overlays;
       };
       filteredSrc =
         nix-filter.lib {
@@ -73,13 +73,6 @@
               });
           });
         };
-      overlays.xmonad-contrib = final: prev: {
-        haskellPackages = prev.haskellPackages.override (old: {
-          overrides = final.lib.composeExtensions
-            (old.overrides or (_: _: { }))
-            (xmonad-contrib.hoverlay final prev);
-        });
-      };
 
       nixosModules.xmonad-damianfral = { pkgs, lib, config, ... }: with lib;
         let
