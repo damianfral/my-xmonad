@@ -46,7 +46,7 @@
             maim
             pulsemixer
             playerctl
-            (nerdfonts.override { fonts = [ "AnonymousPro" ]; })
+            nerd-fonts.anonymice
           ];
         in
         {
