@@ -11,75 +11,75 @@
     xmonad-contrib.url = "github:xmonad/xmonad-contrib";
   };
 
-  outputs =
-    { self
-    , nixpkgs
-    , flake-utils
-    , nix-filter
-    , pre-commit-hooks
-    , xmonad-contrib
-    , ...
-    } @ inputs:
-
-    let
-      pkgsFor = system: import nixpkgs {
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+    nix-filter,
+    pre-commit-hooks,
+    xmonad-contrib,
+    ...
+  } @ inputs: let
+    pkgsFor = system:
+      import nixpkgs {
         inherit system;
-        overlays = [ self.overlays.default ] ++ inputs.xmonad-contrib.overlays;
+        overlays = [self.overlays.default] ++ inputs.xmonad-contrib.overlays;
       };
-      filteredSrc =
-        nix-filter.lib {
-          root = ./.;
-          include = [ "src/" "test/" "package.yaml" "LICENSE" ];
-        };
-
-    in
+    filteredSrc = nix-filter.lib {
+      root = ./.;
+      include = ["src/" "test/" "package.yaml" "LICENSE"];
+    };
+  in
     {
-      overlays.default = final: prev:
-        let
-          xmobar = final.haskell.lib.justStaticExecutables
-            (prev.haskellPackages.xmobar.overrideAttrs (oldAttrs: {
-              configureFlags = oldAttrs.configureFlags ++ [ "--ghc-option=-O2" ];
-            }));
-          tools = with final; [
-            xmobar
-            xwallpaper
-            maim
-            pulsemixer
-            playerctl
-            nerd-fonts.anonymice
-          ];
-        in
-        {
-          xmonad-damianfral = prev.haskell.lib.justStaticExecutables (
-            final.haskellPackages.xmonad-damianfral.overrideAttrs (oldAttrs: {
-              configureFlags = oldAttrs.configureFlags ++ [ "--ghc-option=-O2" ];
-            })
-          );
-          haskellPackages = prev.haskellPackages.override (old: {
-            overrides = final.lib.composeExtensions
-              (old.overrides or (_: _: { }))
-              (self: super: {
-                xmonad-damianfral =
-                  (self.callCabal2nix "xmonad-damianfral" filteredSrc { }).overrideAttrs (oldAttrs: {
-                    nativeBuildInputs =
-                      oldAttrs.nativeBuildInputs ++ [ final.makeWrapper ];
-                    postInstall =
-                      (oldAttrs.postInstall or "") +
-                      ''
-                        wrapProgram $out/bin/xmonad-damianfral \
-                          --suffix PATH : ${final.lib.makeBinPath tools}
-                      '';
-                  });
+      overlays.default = final: prev: let
+        xmobar =
+          final.haskell.lib.justStaticExecutables
+          (prev.haskellPackages.xmobar.overrideAttrs (oldAttrs: {
+            configureFlags = oldAttrs.configureFlags ++ ["--ghc-options=-O2"];
+          }));
+        tools = with final; [
+          xmobar
+          xwallpaper
+          maim
+          pulsemixer
+          playerctl
+          nerd-fonts.anonymice
+        ];
+      in {
+        xmonad-damianfral = prev.haskell.lib.justStaticExecutables (
+          final.haskellPackages.xmonad-damianfral.overrideAttrs (oldAttrs: {
+            configureFlags = oldAttrs.configureFlags ++ ["--ghc-options=-O2"];
+          })
+        );
+        haskellPackages = prev.haskellPackages.override (old: {
+          overrides =
+            final.lib.composeExtensions
+            (old.overrides or (_: _: {}))
+            (self: super: {
+              xmonad-damianfral = (self.callCabal2nix "xmonad-damianfral" filteredSrc {}).overrideAttrs (oldAttrs: {
+                nativeBuildInputs =
+                  oldAttrs.nativeBuildInputs ++ [final.makeWrapper];
+                postInstall =
+                  (oldAttrs.postInstall or "")
+                  + ''
+                    wrapProgram $out/bin/xmonad-damianfral \
+                      --suffix PATH : ${final.lib.makeBinPath tools}
+                  '';
               });
-          });
-        };
+            });
+        });
+      };
 
-      nixosModules.xmonad-damianfral = { pkgs, lib, config, ... }: with lib;
-        let
+      nixosModules.xmonad-damianfral = {
+        pkgs,
+        lib,
+        config,
+        ...
+      }:
+        with lib; let
           cfg = config.services.xserver.windowManager.xmonad-damianfral;
           mkIfEnable = mkIf cfg.enable;
-        in
-        {
+        in {
           options = {
             services.xserver.windowManager.xmonad-damianfral = {
               enable = mkEnableOption "xmonad-damianfral";
@@ -87,13 +87,13 @@
                 type = types.path;
                 default = ./xmobarrc;
               };
-              wallpaper =
-                mkOption {
-                  type = types.path;
-                  default = pkgs.nixos-artwork.wallpapers.dracula
+              wallpaper = mkOption {
+                type = types.path;
+                default =
+                  pkgs.nixos-artwork.wallpapers.dracula
                   + "/share/backgrounds/nixos/nix-wallpaper-dracula.png";
-                };
-              terminal = mkPackageOption pkgs "kitty" { };
+              };
+              terminal = mkPackageOption pkgs "kitty" {};
               screenshotDir = mkOption {
                 type = types.str;
                 default = "~/screenshots";
@@ -104,28 +104,27 @@
           config = mkIfEnable {
             services.xserver.enable = true;
             services.xserver.displayManager = {
-              session = [{
-                manage = "desktop";
-                name = "xmonad-damianfral";
-                start = ''
-                  systemd-cat -t xmonad-damianfral -- \
-                    xmonad-damianfral \
-                     --xmobar-config ${cfg.xmobarConfig} \
-                     --wallpaper ${cfg.wallpaper} \
-                     --term ${getExe cfg.terminal} \
-                     --screenshot-dir ${cfg.screenshotDir} &
-                  waitPID=$!
-                '';
-              }];
+              session = [
+                {
+                  manage = "desktop";
+                  name = "xmonad-damianfral";
+                  start = ''
+                    systemd-cat -t xmonad-damianfral -- \
+                      xmonad-damianfral \
+                       --xmobar-config ${cfg.xmobarConfig} \
+                       --wallpaper ${cfg.wallpaper} \
+                       --term ${getExe cfg.terminal} \
+                       --screenshot-dir ${cfg.screenshotDir} &
+                    waitPID=$!
+                  '';
+                }
+              ];
             };
-            environment.systemPackages =
-              [ self.packages.x86_64-linux.xmonad-damianfral cfg.terminal ];
+            environment.systemPackages = [self.packages.x86_64-linux.xmonad-damianfral cfg.terminal];
           };
         };
     }
-    //
-    flake-utils.lib.eachDefaultSystem (system:
-    let
+    // flake-utils.lib.eachDefaultSystem (system: let
       pkgs = pkgsFor system;
       precommitCheck = pre-commit-hooks.lib.${system}.run {
         src = ./.;
@@ -135,12 +134,11 @@
           hpack.enable = true;
           markdownlint.enable = true;
           nil.enable = true;
-          nixpkgs-fmt.enable = true;
+          alejandra.enable = true;
           ormolu.enable = true;
         };
       };
-    in
-    rec {
+    in rec {
       packages.xmonad-damianfral = pkgs.haskellPackages.xmonad-damianfral;
       packages.default = packages.xmonad-damianfral;
 
@@ -153,8 +151,9 @@
       apps.default = apps.xmonad-damianfral;
 
       devShells.default = pkgs.haskellPackages.shellFor {
-        packages = p: [ packages.xmonad-damianfral ];
-        buildInputs = with pkgs; with pkgs.haskellPackages; [
+        packages = p: [packages.xmonad-damianfral];
+        buildInputs = with pkgs;
+        with pkgs.haskellPackages; [
           actionlint
           cabal-install
           ghcid
@@ -172,9 +171,9 @@
         pre-commit-check = precommitCheck;
         xmonad-damianfral-screenshot = pkgs.stdenv.mkDerivation {
           name = "xmonad-damianfral-screenshot";
-          phases = [ "checkPhase" "installPhase" ];
+          phases = ["checkPhase" "installPhase"];
           src = ./golden-screenshots;
-          buildInputs = [ pkgs.imagemagick xmonad-damianfral-vm ];
+          buildInputs = [pkgs.imagemagick xmonad-damianfral-vm];
           checkPhase = ''
             METRIC=$(magick compare -metric AE ${xmonad-damianfral-vm}/screenshot.000.png $src/screenshot.000.png )
             THRESHOLD=(( 16 * 1080 / 4))
@@ -185,16 +184,16 @@
             cp $src/screenshot.000.png $out/screenshot.a.png
             cp ${xmonad-damianfral-vm}/screenshot.000.png $out/screnshot.b.png
           '';
-
         };
-        xmonad-damianfral-vm =
-          let name = "test_node";
-          in inputs.nixpkgs-stable.lib.nixos.runTest {
+        xmonad-damianfral-vm = let
+          name = "test_node";
+        in
+          inputs.nixpkgs-stable.lib.nixos.runTest {
             name = "nixos-test-xmonad-damianfral";
-            hostPkgs = import inputs.nixpkgs-stable { system = "x86_64-linux"; };
+            hostPkgs = import inputs.nixpkgs-stable {system = "x86_64-linux";};
             enableOCR = false;
             nodes."${name}" = {
-              imports = [ self.nixosModules.xmonad-damianfral ];
+              imports = [self.nixosModules.xmonad-damianfral];
               boot.loader.systemd-boot.enable = true;
               boot.loader.efi.canTouchEfiVariables = true;
               services.xserver.displayManager.lightdm.enable = true;
@@ -204,11 +203,14 @@
                 description = "test";
                 initialPassword = "0000";
                 isNormalUser = true;
-                extraGroups = [ "wheel" "sudo" ];
+                extraGroups = ["wheel" "sudo"];
               };
               virtualisation.graphics = true;
               virtualisation.cores = 2;
-              virtualisation.resolution = { x = 1920; y = 1080; };
+              virtualisation.resolution = {
+                x = 1920;
+                y = 1080;
+              };
               services.xserver.windowManager.xmonad-damianfral.enable = true;
             };
             testScript = ''
@@ -244,4 +246,3 @@
     ];
   };
 }
-
