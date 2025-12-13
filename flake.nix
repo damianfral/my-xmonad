@@ -2,8 +2,7 @@
   description = "TBD";
 
   inputs = {
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/release-24.05";
-    nixpkgs.url = "github:NixOS/nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs/release-25.11";
     flake-utils.url = "github:numtide/flake-utils";
     nix-filter.url = "github:numtide/nix-filter";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
@@ -188,9 +187,9 @@
         xmonad-damianfral-vm = let
           name = "test_node";
         in
-          inputs.nixpkgs-stable.lib.nixos.runTest {
+          inputs.nixpkgs.lib.nixos.runTest {
             name = "nixos-test-xmonad-damianfral";
-            hostPkgs = import inputs.nixpkgs-stable {system = "x86_64-linux";};
+            hostPkgs = import inputs.nixpkgs {system = "x86_64-linux";};
             enableOCR = false;
             nodes."${name}" = {
               imports = [self.nixosModules.xmonad-damianfral];
