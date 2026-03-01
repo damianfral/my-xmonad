@@ -42,3 +42,4 @@ ghc-options:
 - -fwarn-incomplete-record-updates
 - -threaded
 - -rtsopts -with-rtsopts=-N
+- -fno-full-laziness
