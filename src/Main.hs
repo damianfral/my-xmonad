@@ -247,8 +247,10 @@ myKeys screenshotDir conf@(XConfig {XMonad.modMask = modMask'}) =
       ((modMask', xK_period), sendMessage (IncMasterN (-1))),
       -- Quit xmonad.
       ((modMask' .|. shiftMask, xK_q), io exitSuccess),
+      -- Toggle to previously visited workspace.
+      ((modMask', xK_grave), toggleWS),
       -- Restart xmonad.
-      ((modMask', xK_grave), toggleWS)
+      ((modMask', xK_q), restart "xmonad" True)
     ]
       ++
       -- mod-[1..9], Switch to workspace N
