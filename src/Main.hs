@@ -131,7 +131,7 @@ greenclipPrompt c = do
   mkXPrompt GreenclipPrompt c (mkCompletion outputs) copyToClipboard
   where
     mkCompletion = mkComplFunFromList c
-    copyToClipboard str = void $ runProcessWithInput "xsel -ib " [] str
+    copyToClipboard str = void $ runProcessWithInput "xsel" ["-i", "-b"] str
 
 ------------------------------------------------------------------------
 -- Key bindings
@@ -170,7 +170,7 @@ takeScrenshot screenshotDir = do
   now <- getCurrentTime
   let format = "%Y%m%H%M%S"
   let fomattedDate = formatTime defaultTimeLocale format now
-  let filename = "~" </> "screenshot-" <> fomattedDate <.> "png"
+  let filename = screenshotDir </> "screenshot-" <> fomattedDate <.> "png"
   let maimCmd = "maim -sulc 0.9,0.6,0.3,0.4 " <> filename
   let notifyCmd =
         unwords
@@ -268,8 +268,8 @@ myKeys screenshotDir conf@(XConfig {XMonad.modMask = modMask'}) =
       -- mod-shift-[1..9], Move client to workspace N
       -- mod-shift-[1..9], Move client to workspace N
       [ ((m .|. modMask', k), windows $ f i)
-        | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9],
-          (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]
+      | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9],
+        (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]
       ]
 
 ------------------------------------------------------------------------
