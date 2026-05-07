@@ -9,6 +9,7 @@ import qualified Data.Map as M
 import Data.Time
 import GHC.Generics
 import Options.Generic
+import System.Environment (withArgs, withProgName)
 import System.Exit
 import System.FilePath ((<.>), (</>))
 import System.IO
@@ -231,7 +232,9 @@ main = do
   let xConfig =
         docks . ewmhFullscreen . ewmh $
           mkXConfig xmproc wallpaper term screenshotDir
-  xmonad xConfig
+  -- The compiled configuration should be called "xmonad-x86_64-linux" to
+  -- avoid recompilation on startup,
+  withProgName "xmonad-x86_64-linux" $ withArgs [] $ xmonad xConfig
   where
     mkXConfig xmproc wallpaper term screenshotDir =
       def
