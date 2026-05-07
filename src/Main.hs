@@ -165,12 +165,12 @@ xf86AudioPlay = 0x1008ff14
 xf86AudioStop :: KeySym
 xf86AudioStop = 0x1008ff15
 
-takeScrenshot :: FilePath -> IO ()
-takeScrenshot screenshotDir = do
+takeScreenshot :: FilePath -> IO ()
+takeScreenshot screenshotDir = do
   now <- getCurrentTime
   let format = "%Y%m%H%M%S"
-  let fomattedDate = formatTime defaultTimeLocale format now
-  let filename = screenshotDir </> "screenshot-" <> fomattedDate <.> "png"
+  let formattedDate = formatTime defaultTimeLocale format now
+  let filename = screenshotDir </> "screenshot-" <> formattedDate <.> "png"
   let maimCmd = "maim -sulc 0.9,0.6,0.3,0.4 " <> filename
   let notifyCmd =
         unwords
@@ -190,8 +190,8 @@ myKeys screenshotDir conf@(XConfig {XMonad.modMask = modMask'}) =
     [ -- Start a terminal. Terminal to start is specified by myTerminal variable.
       ((modMask' .|. shiftMask, xK_Return), spawn $ XMonad.terminal conf),
       -- Takes screenshot.
-      ((0, 0x1008ff81), liftIO $ takeScrenshot screenshotDir),
-      ((modMask', xK_p), liftIO $ takeScrenshot screenshotDir),
+      ((0, 0x1008ff81), liftIO $ takeScreenshot screenshotDir),
+      ((modMask', xK_p), liftIO $ takeScreenshot screenshotDir),
       ((modMask', xK_r), runOrRaisePrompt myPromptConfig),
       -- Multimedia keys
       ((0, xf86AudioLowerVolume), spawn "pulsemixer --change-volume -5 --max-volume 100"),
