@@ -318,7 +318,7 @@ main = do
   let xConfig =
         docks . ewmhFullscreen . ewmh $
           mkXConfig xmproc wallpaper term screenshotDir
-  launch xConfig =<< getDirectories
+  xmonad xConfig
   where
     mkXConfig xmproc wallpaper term screenshotDir =
       ------------------------------------------------------------------------
