@@ -41,14 +41,6 @@ disableExternalMonitor :: X ()
 disableExternalMonitor = spawn "xrandr --output HDMI-2 --off"
 
 ------------------------------------------------------------------------
--- Terminal
--- The preferred terminal program, which is used in a binding below and by
--- certain contrib modules.
---
-myTerminal :: String
-myTerminal = "$TERMINAL"
-
-------------------------------------------------------------------------
 -- Workspaces
 -- The default number of workspaces (virtual screens) and their names.
 --
