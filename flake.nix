@@ -175,7 +175,7 @@
           buildInputs = [pkgs.imagemagick xmonad-damianfral-vm];
           checkPhase = ''
             METRIC=$(magick compare -metric AE ${xmonad-damianfral-vm}/screenshot.000.png $src/screenshot.000.png )
-            THRESHOLD=(( 16 * 1080 / 4))
+            THRESHOLD=$(( 16 * 1080 / 4))
             ((METRIC < THRESHOLD)) && true
           '';
           installPhase = ''
