@@ -100,6 +100,7 @@
           };
 
           config = mkIfEnable {
+            nixpkgs.overlays = [self.overlays.default];
             services.xserver.enable = true;
             services.xserver.displayManager = {
               session = [
@@ -118,7 +119,7 @@
                 }
               ];
             };
-            environment.systemPackages = [self.packages.x86_64-linux.xmonad-damianfral cfg.terminal];
+            environment.systemPackages = [pkgs.xmonad-damianfral cfg.terminal];
 
             fonts = {
               enableDefaultPackages = true;
@@ -146,20 +147,89 @@
         };
       };
     in rec {
-      packages.xmonad-damianfral = pkgs.haskellPackages.xmonad-damianfral;
-      packages.default = packages.xmonad-damianfral;
+      packages.default = pkgs.xmonad-damianfral;
 
-      apps.xmonad-damianfral = flake-utils.lib.mkApp {
-        drv = packages.xmonad-damianfral;
+      packages.xmonad-damianfral-vm = inputs.nixpkgs.lib.nixos.runTest rec {
+        name = "nixos_test_xmonad_damianfral";
+        hostPkgs = import inputs.nixpkgs {system = "x86_64-linux";};
+        enableOCR = false;
+        nodes."${name}" = {
+          imports = [self.nixosModules.xmonad-damianfral];
+          boot.loader.systemd-boot.enable = true;
+          boot.loader.efi.canTouchEfiVariables = true;
+          services.xserver.displayManager.lightdm.enable = true;
+          services.displayManager.autoLogin.enable = true;
+          services.displayManager.autoLogin.user = "test";
+          users.users.test = {
+            description = "test";
+            initialPassword = "0000";
+            isNormalUser = true;
+            extraGroups = ["wheel" "sudo"];
+          };
+          virtualisation.graphics = true;
+          virtualisation.cores = 2;
+          virtualisation.resolution = {
+            x = 1920;
+            y = 1080;
+          };
+          services.xserver.windowManager.xmonad-damianfral.enable = true;
+        };
+        testScript = ''
+          start_all()
+
+          with subtest("it launches basic services"):
+            ${name}.wait_for_unit("default.target")
+            ${name}.wait_for_unit("network.target")
+            ${name}.wait_for_unit("graphical.target")
+            ${name}.wait_for_unit("display-manager.service")
+            ${name}.wait_for_unit("multi-user.target")
+
+          with subtest("it logs in and starts xmonad"):
+            ${name}.wait_for_x()
+            ${name}.succeed("pgrep xmonad")
+
+          with subtest("it looks as expected"):
+            # Just take a screenshot, another derivation will check it.
+            ${name}.screenshot("screenshot.000.png")
+        '';
       };
+
+      packages.xmonad-damianfral-screenshot = pkgs.stdenv.mkDerivation {
+        name = "xmonad-damianfral-screenshot";
+        phases = ["buildPhase" "installPhase"];
+        src = ./golden-screenshots;
+        buildInputs = [pkgs.imagemagick];
+        buildPhase = with packages; ''
+          set -xue
+
+          RESULT=$(compare -metric AE ${xmonad-damianfral-vm}/screenshot.000.png $src/screenshot.000.png screenshot.diff.png 2>&1) || true
+          METRIC=$(echo $RESULT | cut -f 1 -d ' ')
+          echo $METRIC
+
+          THRESHOLD=1000
+
+          if (( $(echo "$METRIC $THRESHOLD" | awk '{print ($1 < $2)}') )); then
+            echo "Screenshot similarity test PASSED: $METRIC < $THRESHOLD"
+          else
+            echo "Screenshot similarity test FAILED: $METRIC >= $THRESHOLD"
+            exit 1
+          fi
+        '';
+        installPhase = with packages; ''
+          mkdir -p $out
+          cp $src/screenshot.000.png $out/screenshot.a.png
+          cp ${xmonad-damianfral-vm}/screenshot.000.png $out/screenshot.b.png
+          cp screenshot.diff.png $out/
+        '';
+      };
+
       apps.xmonad-damianfral-vm-interactive = flake-utils.lib.mkApp {
         drv = checks.xmonad-damianfral-vm.driverInteractive;
         name = "nixos-test-driver";
       };
-      apps.default = apps.xmonad-damianfral;
 
       devShells.default = pkgs.haskellPackages.shellFor {
-        packages = p: [packages.xmonad-damianfral];
+        packages = p: [p.xmonad-damianfral];
         buildInputs = with pkgs;
         with pkgs.haskellPackages; [
           actionlint
@@ -175,72 +245,7 @@
         inherit (precommitCheck) shellHook;
       };
 
-      checks = rec {
-        pre-commit-check = precommitCheck;
-        xmonad-damianfral-screenshot = pkgs.stdenv.mkDerivation {
-          name = "xmonad-damianfral-screenshot";
-          phases = ["checkPhase" "installPhase"];
-          src = ./golden-screenshots;
-          buildInputs = [pkgs.imagemagick xmonad-damianfral-vm];
-          checkPhase = ''
-            METRIC=$(magick compare -metric AE ${xmonad-damianfral-vm}/screenshot.000.png $src/screenshot.000.png )
-            THRESHOLD=$(( 16 * 1080 / 4))
-            ((METRIC < THRESHOLD)) && true
-          '';
-          installPhase = ''
-            mkdir -p $out
-            cp $src/screenshot.000.png $out/screenshot.a.png
-            cp ${xmonad-damianfral-vm}/screenshot.000.png $out/screnshot.b.png
-          '';
-        };
-        xmonad-damianfral-vm = let
-          name = "test_node";
-        in
-          inputs.nixpkgs.lib.nixos.runTest {
-            name = "nixos-test-xmonad-damianfral";
-            hostPkgs = import inputs.nixpkgs {system = "x86_64-linux";};
-            enableOCR = false;
-            nodes."${name}" = {
-              imports = [self.nixosModules.xmonad-damianfral];
-              boot.loader.systemd-boot.enable = true;
-              boot.loader.efi.canTouchEfiVariables = true;
-              services.xserver.displayManager.lightdm.enable = true;
-              services.displayManager.autoLogin.enable = true;
-              services.displayManager.autoLogin.user = "test";
-              users.users.test = {
-                description = "test";
-                initialPassword = "0000";
-                isNormalUser = true;
-                extraGroups = ["wheel" "sudo"];
-              };
-              virtualisation.graphics = true;
-              virtualisation.cores = 2;
-              virtualisation.resolution = {
-                x = 1920;
-                y = 1080;
-              };
-              services.xserver.windowManager.xmonad-damianfral.enable = true;
-            };
-            testScript = ''
-              start_all()
-
-              with subtest("it launches basic services"):
-                ${name}.wait_for_unit("default.target")
-                ${name}.wait_for_unit("network.target")
-                ${name}.wait_for_unit("graphical.target")
-                ${name}.wait_for_unit("display-manager.service")
-                ${name}.wait_for_unit("multi-user.target")
-
-              with subtest("it logs in and starts xmonad"):
-                ${name}.wait_for_x()
-                ${name}.succeed("pgrep xmonad")
-
-              with subtest("it looks as expected"):
-                # Just take a screenshot, another derivation will check it.
-                ${name}.screenshot("screenshot.000.png")
-            '';
-          };
-      };
+      checks = {pre-commit-check = precommitCheck;};
     });
   nixConfig = {
     extra-substituters = [
