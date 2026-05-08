@@ -42,7 +42,6 @@
           maim
           pulsemixer
           playerctl
-          nerd-fonts.anonymice
         ];
       in {
         xmonad-damianfral = prev.haskell.lib.justStaticExecutables (
@@ -120,6 +119,15 @@
               ];
             };
             environment.systemPackages = [self.packages.x86_64-linux.xmonad-damianfral cfg.terminal];
+
+            fonts = {
+              enableDefaultPackages = true;
+              packages = [pkgs.nerd-fonts.anonymice];
+              fontconfig = {
+                enable = true;
+                defaultFonts.monospace = ["AnonymicePro Nerd Font"];
+              };
+            };
           };
         };
     }
