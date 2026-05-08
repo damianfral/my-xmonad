@@ -93,7 +93,7 @@ greenclipPrompt c = do
   mkXPrompt GreenclipPrompt c (mkCompletion outputs) copyToClipboard
   where
     mkCompletion = mkComplFunFromList c
-    copyToClipboard str = void $ runProcessWithInput "xsel" ["-i", "-b"] str
+    copyToClipboard str = void $ runProcessWithInput "xclip" ["-selection", "clipboard"] str
 
 -- Key bindings
 
