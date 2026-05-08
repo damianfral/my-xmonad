@@ -146,6 +146,7 @@
       };
       apps.xmonad-damianfral-vm-interactive = flake-utils.lib.mkApp {
         drv = checks.xmonad-damianfral-vm.driverInteractive;
+        name = "nixos-test-driver";
       };
       apps.default = apps.xmonad-damianfral;
 
