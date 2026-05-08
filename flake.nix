@@ -196,8 +196,8 @@
               boot.loader.systemd-boot.enable = true;
               boot.loader.efi.canTouchEfiVariables = true;
               services.xserver.displayManager.lightdm.enable = true;
-              services.xserver.displayManager.autoLogin.enable = true;
-              services.xserver.displayManager.autoLogin.user = "test";
+              services.displayManager.autoLogin.enable = true;
+              services.displayManager.autoLogin.user = "test";
               users.users.test = {
                 description = "test";
                 initialPassword = "0000";
