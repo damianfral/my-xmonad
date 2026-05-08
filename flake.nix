@@ -43,6 +43,7 @@
           pulsemixer
           playerctl
           xclip
+          haskellPackages.greenclip
         ];
       in {
         xmonad-damianfral = prev.haskell.lib.justStaticExecutables (
