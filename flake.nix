@@ -155,7 +155,7 @@
         name = "nixos_test_xmonad_damianfral";
         hostPkgs = import inputs.nixpkgs {system = "x86_64-linux";};
         enableOCR = false;
-        nodes."${name}" = {
+        nodes."${name}" = {pkgs, ...}: {
           imports = [self.nixosModules.xmonad-damianfral];
           boot.loader.systemd-boot.enable = true;
           boot.loader.efi.canTouchEfiVariables = true;
@@ -175,6 +175,7 @@
             y = 1080;
           };
           services.xserver.windowManager.xmonad-damianfral.enable = true;
+          environment.systemPackages = [pkgs.kitty];
         };
         testScript = ''
           start_all()
@@ -190,9 +191,17 @@
             ${name}.wait_for_x()
             ${name}.succeed("pgrep xmonad")
 
-          with subtest("it looks as expected"):
+          with subtest("it launches 3 terminals"):
+            ${name}.send_key("meta_l-shift-ret")
+            ${name}.send_key("meta_l-shift-ret")
+            ${name}.send_key("meta_l-shift-ret")
+            ${name}.sleep(4)
+
+          with subtest("it takes an screenshot"):
             # Just take a screenshot, another derivation will check it.
             ${name}.screenshot("screenshot.000.png")
+
+          ${name}.shutdown()
         '';
       };
 
@@ -226,7 +235,7 @@
       };
 
       apps.xmonad-damianfral-vm-interactive = flake-utils.lib.mkApp {
-        drv = checks.xmonad-damianfral-vm.driverInteractive;
+        drv = packages.xmonad-damianfral-vm.driverInteractive;
         name = "nixos-test-driver";
       };
 
