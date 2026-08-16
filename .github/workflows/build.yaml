@@ -26,7 +26,13 @@ jobs:
         with:
           name: opensource
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - uses: damianfral/nix-cache-lookup@master
+        id : nix-cache-lookup
+        with:
+          flake-attribute: .#xmonad-damianfral-screenshot
       - run: nix build .#xmonad-damianfral-screenshot
+        if: steps.nix-cache-lookup.outputs.cached != 'true'
+
 
   build-dev-shell:
     runs-on: ubuntu-latest
