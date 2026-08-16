@@ -199,12 +199,12 @@
       packages.xmonad-damianfral-screenshot = pkgs.stdenv.mkDerivation {
         name = "xmonad-damianfral-screenshot";
         phases = ["buildPhase" "installPhase"];
-        src = ./golden-screenshots;
+        src = ./screenshot.png;
         buildInputs = [pkgs.imagemagick];
         buildPhase = with packages; ''
           set -xue
 
-          RESULT=$(compare -metric AE ${xmonad-damianfral-vm}/screenshot.000.png $src/screenshot.000.png screenshot.diff.png 2>&1) || true
+          RESULT=$(compare -metric AE ${xmonad-damianfral-vm}/screenshot.000.png $src screenshot.diff.png 2>&1) || true
           METRIC=$(echo $RESULT | cut -f 1 -d ' ')
           echo $METRIC
 
@@ -219,7 +219,7 @@
         '';
         installPhase = with packages; ''
           mkdir -p $out
-          cp $src/screenshot.000.png $out/screenshot.a.png
+          cp $src $out/screenshot.a.png
           cp ${xmonad-damianfral-vm}/screenshot.000.png $out/screenshot.b.png
           cp screenshot.diff.png $out/
         '';
