@@ -6,7 +6,7 @@ cabal-version: 1.12
 
 name:           xmonad-damianfral
 version:        0.1.0.1
-description:    Please see the README
+synopsis:       Personal xmonad window manager configuration
 homepage:       https://github.com/damianfral/xmonad-damianfral#readme
 bug-reports:    https://github.com/damianfral/xmonad-damianfral/issues
 author:         damianfral
