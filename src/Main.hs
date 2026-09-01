@@ -19,7 +19,6 @@ import XMonad.Actions.UpdatePointer (updatePointer)
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.EwmhDesktops (ewmh, ewmhFullscreen)
 import XMonad.Hooks.ManageDocks
-import XMonad.Layout.LayoutModifier
 import XMonad.Layout.NoBorders
 import XMonad.Prompt
 import XMonad.Prompt.Pass (passGeneratePrompt)
@@ -46,20 +45,7 @@ disableExternalMonitor = spawn "xrandr --output HDMI-2 --off"
 myWorkspaces :: [String]
 myWorkspaces = show @Int <$> [1 .. 9]
 
--- Layouts
-defaultLayouts ::
-  ModifiedLayout
-    AvoidStruts
-    ( Choose
-        (ModifiedLayout SmartBorder Tall)
-        (ModifiedLayout WithBorder Full)
-    )
-    Window
-defaultLayouts =
-  avoidStruts $ smartBorders (Tall 1 (3 / 100) (1 / 2)) ||| noBorders Full
-
 -- Colors and borders
-
 myNormalBorderColor :: String
 myNormalBorderColor = "#405c79"
 
@@ -93,10 +79,10 @@ greenclipPrompt c = do
   mkXPrompt GreenclipPrompt c (mkCompletion outputs) copyToClipboard
   where
     mkCompletion = mkComplFunFromList c
-    copyToClipboard str = void $ runProcessWithInput "xclip" ["-selection", "clipboard"] str
+    copyToClipboard str =
+      void $ runProcessWithInput "xclip" ["-selection", "clipboard"] str
 
 -- Key bindings
-
 myModMask :: KeyMask
 myModMask = mod4Mask
 
@@ -170,7 +156,6 @@ myKeys screenshotDir conf@(XConfig {XMonad.modMask = modMask'}) =
       -- Standard xmonad key bindings
       ((modMask' .|. shiftMask, xK_c), kill),
       ((modMask', xK_space), sendMessage NextLayout),
-      ((modMask' .|. shiftMask, xK_space), setLayout $ XMonad.layoutHook conf),
       ((modMask', xK_n), refresh),
       ((modMask', xK_Tab), windows W.focusDown),
       ((modMask' .|. shiftMask, xK_Tab), windows W.focusUp),
@@ -189,15 +174,12 @@ myKeys screenshotDir conf@(XConfig {XMonad.modMask = modMask'}) =
       ((modMask', xK_grave), toggleWS),
       ((modMask', xK_q), restart "xmonad" True)
     ]
-      ++ [ ((m .|. modMask', k), windows $ f i)
+      <> [ ((m .|. modMask', k), windows $ f i)
          | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9],
            (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]
          ]
 
 -- Mouse bindings
-
-myFocusFollowsMouse :: Bool
-myFocusFollowsMouse = True
 
 myMouseBindings :: XConfig l -> M.Map (KeyMask, Button) (Window -> X ())
 myMouseBindings (XConfig {XMonad.modMask = modMask'}) =
@@ -208,7 +190,6 @@ myMouseBindings (XConfig {XMonad.modMask = modMask'}) =
     ]
 
 -- Startup hook
-
 myStartupHook :: String -> X ()
 myStartupHook wallpaperPath = spawn $ "xwallpaper --zoom " <> wallpaperPath
 
@@ -239,7 +220,7 @@ main = do
     mkXConfig xmproc wallpaper term screenshotDir =
       def
         { terminal = term,
-          focusFollowsMouse = myFocusFollowsMouse,
+          focusFollowsMouse = True,
           borderWidth = myBorderWidth,
           modMask = myModMask,
           workspaces = myWorkspaces,
@@ -249,7 +230,10 @@ main = do
           mouseBindings = myMouseBindings,
           startupHook = myStartupHook wallpaper,
           manageHook = manageDocks <+> manageHook def,
-          layoutHook = defaultLayouts,
+          layoutHook =
+            avoidStruts $
+              smartBorders $
+                Tall 1 (3 / 100) (1 / 2) ||| noBorders Full,
           logHook = do
             dynamicLogWithPP
               xmobarPP
